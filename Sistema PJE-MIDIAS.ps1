@@ -26,7 +26,7 @@ function Instalar-Programa($nome, $url, $arquivo, $args) {
     try {
         Invoke-WebRequest -Uri $url -OutFile $caminho -UseBasicParsing
     } catch {
-        Write-Host "✖ Falha ao baixar $nome: $_" -ForegroundColor Red
+        Write-Host "✖ Falha ao baixar ${nome}: $_" -ForegroundColor Red
         return
     }
 
@@ -35,7 +35,7 @@ function Instalar-Programa($nome, $url, $arquivo, $args) {
         try {
             Start-Process -FilePath $caminho -ArgumentList $args -Wait
         } catch {
-            Write-Host "✖ Falha na instalação de $nome: $_" -ForegroundColor Red
+            Write-Host "✖ Falha na instalação de ${nome}: $_" -ForegroundColor Red
         }
     } else {
         Write-Host "❌ Arquivo não encontrado após o download: $caminho" -ForegroundColor Red
@@ -48,3 +48,4 @@ foreach ($app in $programas) {
 }
 
 Write-Host "`n✅ Instalação finalizada." -ForegroundColor Green
+read-host "Pressione qualquer tecla para Sair"
