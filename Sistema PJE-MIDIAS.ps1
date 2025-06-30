@@ -22,6 +22,16 @@ $programas = @(
 function Instalar-Programa($nome, $url, $arquivo, $args) {
     $caminho = Join-Path $temp $arquivo
 
+    # Remove o arquivo antigo, se existir
+    if (Test-Path $caminho) {
+        try {
+            Remove-Item $caminho -Force
+        } catch {
+            Write-Host "⚠ Não foi possível excluir arquivo existente: $caminho" -ForegroundColor Yellow
+            return
+        }
+    }
+
     Write-Host "`n→ Baixando $nome..." -ForegroundColor Cyan
     try {
         Invoke-WebRequest -Uri $url -OutFile $caminho -UseBasicParsing
@@ -33,7 +43,11 @@ function Instalar-Programa($nome, $url, $arquivo, $args) {
     if (Test-Path $caminho) {
         Write-Host "✔ Instalando $nome..." -ForegroundColor Green
         try {
-            Start-Process -FilePath $caminho -ArgumentList $args -Wait
+            if (![string]::IsNullOrWhiteSpace($args)) {
+                Start-Process -FilePath $caminho -ArgumentList $args -Wait
+            } else {
+                Start-Process -FilePath $caminho -Wait
+            }
         } catch {
             Write-Host "✖ Falha na instalação de ${nome}: $_" -ForegroundColor Red
         }
@@ -48,4 +62,3 @@ foreach ($app in $programas) {
 }
 
 Write-Host "`n✅ Instalação finalizada." -ForegroundColor Green
-read-host "Pressione qualquer tecla para Sair"
