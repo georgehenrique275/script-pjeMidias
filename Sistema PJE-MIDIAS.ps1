@@ -97,7 +97,6 @@ if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdent
 Write-Log "=== INSTALAÇÃO JAVA + PJE MIDIAS INICIADA ==="
 Remove-JavaX86
 Install-JavaJRE
-Remove-PJEMidias
 Install-PJEMidias
 Write-Log "=== INSTALAÇÃO CONCLUÍDA ==="
 
