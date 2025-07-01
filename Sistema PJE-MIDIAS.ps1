@@ -1,3 +1,4 @@
+
 # Caminho temporário para armazenar instaladores
 $temp = "$env:TEMP\InstaladoresPJE"
 New-Item -Path $temp -ItemType Directory -Force | Out-Null
@@ -86,7 +87,8 @@ function Instalar-Programa($nome, $url, $arquivo, $args, $detect) {
             if (![string]::IsNullOrWhiteSpace($args)) {
                 Start-Process -FilePath $caminho -ArgumentList $args -Wait -WindowStyle Hidden -NoNewWindow
             } else {
-                Start-Process -FilePath $caminho -Wait -WindowStyle Hidden -NoNewWindow
+                Start-Process -FilePath $caminho -ArgumentList $args -Wait -WindowStyle Hidden
+
             }
 
             # Após instalação, abrir o PJe Mídias
