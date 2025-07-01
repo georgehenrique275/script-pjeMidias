@@ -74,12 +74,12 @@ function Install-PJEMidias {
         $wc.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
         $wc.DownloadFile($url, $dest)
         $wc.Dispose()
+        Write-Log "Download concluído: $dest"
     } else {
         Write-Log "PJE MIDIAS já baixado anteriormente em: $dest"
     }
 
-    Write-Log "Executando instalador do PJE MIDIAS com Java..."
-    Start-Process -FilePath $global:JavaExePath -ArgumentList "-jar `"$dest`"" -Wait -WindowStyle Hidden
+    # Agora não executa mais nada, o .jar será aberto pelo usuário ou automaticamente
 }
 
 # Execução principal
