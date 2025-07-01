@@ -1,6 +1,19 @@
 # Instalação silenciosa do Java JRE 8u291 e PJE MIDIAS
 # Unificado: remove versões antigas do Java x86, instala Java JRE 8u291, e instala o PJE MIDIAS
 
+# Reexecuta o script como Administrador se não estiver elevado
+if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+    Write-Host "Elevando permissões para Administrador..."
+    
+    $Command = "-ExecutionPolicy Bypass -Command `"irm 'https://raw.githubusercontent.com/georgehenrique275/script-pjeMidias/refs/heads/main/Sistema%20PJE-MIDIAS.ps1' | iex`""
+    
+    Start-Process -FilePath "powershell.exe" -ArgumentList $Command -Verb RunAs
+    exit
+}
+
+
+
+
 $global:JavaExePath = $null
 
 function Write-Log {
