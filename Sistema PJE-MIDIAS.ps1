@@ -11,9 +11,6 @@ if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdent
     exit
 }
 
-
-
-
 $global:JavaExePath = $null
 
 function Write-Log {
@@ -68,8 +65,6 @@ function Install-JavaJRE {
     Write-Log "Java instalado em: $global:JavaExePath"
 }
 
-
-
 function Install-PJEMidias {
     $url = "https://midias.pje.jus.br/midias/web/controle-versao/download?versao=1.4.0&tip_sistema_operacional=WIN64"
     $dest = "$env:TEMP\pje-midias-1.4.0.jar"
@@ -82,9 +77,9 @@ function Install-PJEMidias {
     } else {
         Write-Log "PJE MIDIAS já baixado anteriormente em: $dest"
     }
-    Write-Log "Executando PJE MIDIAS com Java: $global:JavaExePath"
-    Start-Process -FilePath $global:JavaExePath -ArgumentList "-jar `"$dest`"" -WindowStyle Hidden
 
+    Write-Log "Executando instalador do PJE MIDIAS com Java..."
+    Start-Process -FilePath $global:JavaExePath -ArgumentList "-jar `"$dest`"" -Wait -WindowStyle Hidden
 }
 
 # Execução principal
