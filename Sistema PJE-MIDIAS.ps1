@@ -68,25 +68,7 @@ function Install-JavaJRE {
     Write-Log "Java instalado em: $global:JavaExePath"
 }
 
-function Remove-PJEMidias {
-    $paths = @(
-        "$env:USERPROFILE\Desktop\PJE*",
-        "$env:USERPROFILE\Documents\PJE*",
-        "$env:PROGRAMFILES\PJE*",
-        "$env:PROGRAMFILES(X86)\PJE*",
-        "$env:LOCALAPPDATA\PJE*",
-        "$env:APPDATA\PJE*",
-        "$env:USERPROFILE\Desktop\ad-*.jar",
-        "$env:USERPROFILE\Downloads\ad-*.jar",
-        "$env:USERPROFILE\Documents\ad-*.jar"
-    )
-    foreach ($p in $paths) {
-        Get-ChildItem $p -ErrorAction SilentlyContinue | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
-    }
-    Get-Process | Where-Object { $_.ProcessName -match "java.*pje|pje.*java" -or $_.MainWindowTitle -match "PJe.*Mídias" } | ForEach-Object {
-        try { Stop-Process -Id $_.Id -Force } catch {}
-    }
-}
+
 
 function Install-PJEMidias {
     $url = "https://midias.pje.jus.br/midias/web/controle-versao/download?versao=1.4.0&tip_sistema_operacional=WIN64"
@@ -101,7 +83,8 @@ function Install-PJEMidias {
         Write-Log "PJE MIDIAS já baixado anteriormente em: $dest"
     }
     Write-Log "Executando PJE MIDIAS com Java: $global:JavaExePath"
-    Start-Process -FilePath $global:JavaExePath -ArgumentList "-jar", "\"$dest\"" -WindowStyle Hidden
+    Start-Process -FilePath $global:JavaExePath -ArgumentList "-jar `"$dest`"" -WindowStyle Hidden
+
 }
 
 # Execução principal
