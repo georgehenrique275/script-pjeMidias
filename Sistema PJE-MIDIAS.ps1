@@ -8,7 +8,7 @@ $programas = @(
         Nome    = "Java x86"
         Url     = "https://javadl.oracle.com/webapps/download/AutoDL?BundleId=244582_d7fc238d0cbf4b0dac67be84580cfb4b"
         Arquivo = "java_x86.exe"
-        Args    = "/s"
+        Args    = "/s INSTALL_SILENT=1 AUTO_UPDATE=0 REBOOT=0 EULA=0 REMOVEOUTOFDATEJRES=1"
         Detect  = "Java 8 Update"
     },
     @{
@@ -35,9 +35,9 @@ function Remover-Programa($nomeParcial) {
                     try {
                         $uninstallCmd = $_.UninstallString
                         if ($uninstallCmd -match "msiexec") {
-                            Start-Process -FilePath "msiexec.exe" -ArgumentList "/x $($_.PSChildName) /quiet /norestart" -Wait
+                            Start-Process -FilePath "msiexec.exe" -ArgumentList "/x", "$($_.PSChildName)", "/quiet", "/norestart" -Wait -WindowStyle Hidden
                         } else {
-                            Start-Process -FilePath "cmd.exe" -ArgumentList "/c `"$uninstallCmd /quiet /norestart`"" -Wait
+                            Start-Process -FilePath $uninstallCmd -ArgumentList "/quiet", "/norestart" -Wait -WindowStyle Hidden
                         }
                         Write-Host "✔ $($_.DisplayName) removido com sucesso." -ForegroundColor Green
                     } catch {
@@ -63,7 +63,7 @@ function BaixarArquivo($url, $destino) {
 function Instalar-Programa($nome, $url, $arquivo, $args, $detect) {
     $caminho = Join-Path $temp $arquivo
 
-    # Remover versões anteriores
+    # Remover versões anteriores (incluindo múltiplas versões)
     Remover-Programa $detect
 
     # Limpa o arquivo antigo se existir
@@ -84,10 +84,23 @@ function Instalar-Programa($nome, $url, $arquivo, $args, $detect) {
         Write-Host "✔ Instalando $nome..." -ForegroundColor Green
         try {
             if (![string]::IsNullOrWhiteSpace($args)) {
-                Start-Process -FilePath $caminho -ArgumentList $args -Wait
+                Start-Process -FilePath $caminho -ArgumentList $args -Wait -WindowStyle Hidden -NoNewWindow
             } else {
-                Start-Process -FilePath $caminho -Wait
+                Start-Process -FilePath $caminho -Wait -WindowStyle Hidden -NoNewWindow
             }
+
+            # Após instalação, abrir o PJe Mídias
+            if ($nome -eq "PJe Mídias") {
+                Start-Sleep -Seconds 3
+                $caminhoExe = "${env:ProgramFiles(x86)}\PJe Mídias\pjmidias.exe"
+                if (Test-Path $caminhoExe) {
+                    Write-Host "→ Abrindo PJe Mídias..." -ForegroundColor Cyan
+                    Start-Process -FilePath $caminhoExe
+                } else {
+                    Write-Host "⚠ pjmidias.exe não encontrado em $caminhoExe" -ForegroundColor Yellow
+                }
+            }
+
         } catch {
             Write-Host "✖ Falha na instalação de ${nome}: $_" -ForegroundColor Red
         }
