@@ -1,13 +1,11 @@
 # Instalação silenciosa do Java JRE 8u291 e PJE MIDIAS
-# Unificado: remove versões antigas do Java x86, instala Java JRE 8u291, e instala o PJE MIDIAS
 
 # Reexecuta o script como Administrador se não estiver elevado
-if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
-    Write-Host "Elevando permissões para Administrador..."
-    
-    $Command = "-ExecutionPolicy Bypass -Command `"irm 'https://raw.githubusercontent.com/georgehenrique275/script-pjeMidias/refs/heads/main/Sistema%20PJE-MIDIAS.ps1' | iex`""
-    
-    Start-Process -FilePath "powershell.exe" -ArgumentList $Command -Verb RunAs
+if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
+    [Security.Principal.WindowsBuiltInRole]::Administrator)) {
+    Write-Host "Reexecutando como administrador..."
+    $CommandLine = "-ExecutionPolicy Bypass -File `"$PSCommandPath`""
+    Start-Process powershell -Verb runAs -ArgumentList $CommandLine
     exit
 }
 
@@ -67,32 +65,35 @@ function Install-JavaJRE {
 
 function Install-PJEMidias {
     $url = "https://midias.pje.jus.br/midias/web/controle-versao/download?versao=1.4.0&tip_sistema_operacional=WIN64"
-    $dest = "$env:TEMP\pje-midias-1.4.0.jar"
-    if (-not (Test-Path $dest)) {
-        Write-Log "Baixando PJE MIDIAS..."
-        $wc = New-Object System.Net.WebClient
-        $wc.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
-        $wc.DownloadFile($url, $dest)
-        $wc.Dispose()
-        Write-Log "Download concluído: $dest"
-    } else {
-        Write-Log "PJE MIDIAS já baixado anteriormente em: $dest"
-    }
+    $dest = "$env:TEMP\ad-1.4.0.x64.exe"
 
-    # Agora não executa mais nada, o .jar será aberto pelo usuário ou automaticamente
+    try {
+        if (-not (Test-Path $dest)) {
+            Write-Log "Baixando instalador do PJE MIDIAS..."
+            Invoke-WebRequest -Uri $url -OutFile $dest -UseBasicParsing
+            Write-Log "Download concluído: $dest"
+        } else {
+            Write-Log "Instalador já existe: $dest"
+        }
+
+        if (Test-Path $dest) {
+            Write-Log "Executando instalador do PJE MIDIAS..."
+            Start-Process -FilePath $dest -Wait -WindowStyle Hidden
+            Write-Log "Instalação concluída."
+        } else {
+            Write-Log "Erro: Instalador não encontrado em $dest"
+        }
+    } catch {
+        Write-Log "Erro durante instalação: $($_.Exception.Message)"
+    }
 }
 
 # Execução principal
-if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
-    Write-Warning "Execute o PowerShell como administrador!"
-    Pause
-    exit
-}
-
 Write-Log "=== INSTALAÇÃO JAVA + PJE MIDIAS INICIADA ==="
 Remove-JavaX86
 Install-JavaJRE
+Write-Log "=== INÍCIO DA INSTALAÇÃO DO PJE MIDIAS ==="
 Install-PJEMidias
-Write-Log "=== INSTALAÇÃO CONCLUÍDA ==="
+Write-Log "=== FIM DA INSTALAÇÃO ==="
 
 Read-Host "Pressione Enter para sair"
