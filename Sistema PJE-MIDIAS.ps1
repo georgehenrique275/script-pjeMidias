@@ -1,4 +1,4 @@
-# Instalação silenciosa do Java JRE 8u291 e PJE MIDIAS
+# Instalação silenciosa do Java Liberica JRE 8FULL e PJE MIDIAS
 
 # Reexecuta o script como Administrador se não estiver elevado
 if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
@@ -9,58 +9,45 @@ if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdent
     exit
 }
 
-$global:JavaExePath = $null
-
-function Write-Log {
-    param([string]$Message, [string]$Level = "INFO")
-    $Timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-    $LogEntry = "[$Timestamp] [$Level] $Message"
-    Write-Host $LogEntry
-    try {
-        $LogEntry | Out-File -FilePath "$env:TEMP\PJE_MIDIAS_Install.log" -Append -Encoding UTF8
-    } catch {
-        Write-Host "Erro ao escrever no log: $($_.Exception.Message)" -ForegroundColor Red
-    }
+function Write-Log($msg) {
+    $timestamp = Get-Date -Format "HH:mm:ss"
+    Write-Host "[$timestamp] $msg"
 }
 
 function Remove-JavaX86 {
-    Write-Log "Verificando versões anteriores do Java x86..."
-    $paths = @(
-        "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*",
-        "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*"
-    )
-    foreach ($path in $paths) {
-        Get-ItemProperty $path -ErrorAction SilentlyContinue | ForEach-Object {
-            if ($_.DisplayName -like "*Java*Update*" -and $_.DisplayName -notlike "*64-bit*" -and $_.UninstallString) {
-                try {
-                    if ($_.UninstallString -match "msiexec") {
-                        Start-Process msiexec.exe -ArgumentList "/x", $_.PSChildName, "/quiet", "/norestart" -Wait -WindowStyle Hidden
-                    } else {
-                        Start-Process $_.UninstallString -ArgumentList "/s" -Wait -WindowStyle Hidden
-                    }
-                    Write-Log "Java removido: $($_.DisplayName)"
-                } catch {
-                    Write-Log "Erro ao remover Java: $_" "ERROR"
-                }
-            }
+    Write-Log "Removendo instalações existentes do Java..."
+
+    $javaApps = Get-WmiObject -Class Win32_Product | Where-Object {
+        $_.Name -match "Java" -or $_.Name -match "JRE" -or $_.Name -match "OpenJDK" -or $_.Name -match "Liberica"
+    }
+
+    foreach ($app in $javaApps) {
+        Write-Log "Desinstalando: $($app.Name)"
+        try {
+            $app.Uninstall() | Out-Null
+            Write-Log "Removido com sucesso: $($app.Name)"
+        } catch {
+            Write-Log "Erro ao remover $($app.Name): $_"
         }
     }
 }
 
 function Install-JavaJRE {
-    $temp = "$env:TEMP\jre-8u291"
-    $exe = "$temp\jre-8u291-windows-i586.exe"
-    $url = "https://javadl.oracle.com/webapps/download/AutoDL?BundleId=244582_d7fc238d0cbf4b0dac67be84580cfb4b"
-    New-Item -Path $temp -ItemType Directory -Force | Out-Null
-    if (-not (Test-Path $exe)) {
-        Write-Log "Baixando instalador do Java JRE..."
-        Invoke-WebRequest -Uri $url -OutFile $exe -UseBasicParsing
+    $javaUrl = "https://download.bell-sw.com/java/8u462+11/bellsoft-jre8u462+11-windows-amd64-full.msi"
+    $installerPath = "$env:TEMP\bellsoft-jre8u462.msi"
+
+    Write-Log "Baixando instalador do BellSoft Java JRE 8u462..."
+    Invoke-WebRequest -Uri $javaUrl -OutFile $installerPath
+
+    if (Test-Path $installerPath) {
+        Write-Log "Instalador baixado com sucesso. Instalando em modo silencioso..."
+        $installArgs = "/i `"$installerPath`" /qn /norestart"
+        Start-Process "msiexec.exe" -ArgumentList $installArgs -Wait -NoNewWindow
+        Write-Log "Instalação do Java concluída."
+        Remove-Item $installerPath -Force -ErrorAction SilentlyContinue
+    } else {
+        Write-Log "Erro: Falha ao baixar o instalador. Verifique a URL."
     }
-    Write-Log "Instalando Java JRE 8u291..."
-    Start-Process -FilePath $exe -ArgumentList "/s", "INSTALL_SILENT=1", "AUTO_UPDATE=0", "REBOOT=0", "EULA=0", "REMOVEOUTOFDATEJRES=1" -Wait -WindowStyle Hidden
-    $global:JavaExePath = "$env:ProgramFiles(x86)\Java\jre1.8.0_291\bin\java.exe"
-    if (-not (Test-Path $global:JavaExePath)) { $global:JavaExePath = "java" }
-    Write-Log "Java instalado em: $global:JavaExePath"
 }
 
 function Install-PJEMidias {
@@ -79,12 +66,12 @@ function Install-PJEMidias {
         if (Test-Path $dest) {
             Write-Log "Executando instalador do PJE MIDIAS..."
             Start-Process -FilePath $dest -Wait -WindowStyle Hidden
-            Write-Log "Instalação concluída."
+            Write-Log "Instalação do PJE MIDIAS concluída."
         } else {
             Write-Log "Erro: Instalador não encontrado em $dest"
         }
     } catch {
-        Write-Log "Erro durante instalação: $($_.Exception.Message)"
+        Write-Log "Erro durante instalação do PJE MIDIAS: $($_.Exception.Message)"
     }
 }
 
@@ -95,5 +82,3 @@ Install-JavaJRE
 Write-Log "=== INÍCIO DA INSTALAÇÃO DO PJE MIDIAS ==="
 Install-PJEMidias
 Write-Log "=== FIM DA INSTALAÇÃO ==="
-
-Read-Host "Pressione Enter para sair"
